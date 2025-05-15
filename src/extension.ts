@@ -87,6 +87,7 @@ async function createNewWorkspace(folder: vscode.WorkspaceFolder): Promise<ego_w
             );
         });
 
+        // 工作区的每个文件夹创建一个实例
         newWorkspace = new ego_workspace.Workspace(
             nextWorkspaceId--, folder, CONTEXT
         );
@@ -95,6 +96,7 @@ async function createNewWorkspace(folder: vscode.WorkspaceFolder): Promise<ego_w
             `Initializing workspace ...`
         );
         try {
+            // 2. 初始化
             const HAS_BEEN_INITIALIZED = await newWorkspace.initialize();
             if (HAS_BEEN_INITIALIZED) {
                 LOGGER.info(
@@ -421,15 +423,20 @@ async function withTextDocument(
 
 
 export async function activate(context: vscode.ExtensionContext) {
+    // 创建工作流
+    // WF.next 将任务按顺序添加到工作流中
+    // 每个任务都是一个异步函数，只有在前一个任务完成后，后一个任务才会开始执行
     const WF = ego_helpers.buildWorkflow();
 
     // create extenstion directory, if needed
+    // step1. 在 HOME 目录下创建 .vscode-powertools 插件目录，用来保存运行日志
     WF.next(async () => {
         try {
             await ego_helpers.createExtensionDirectoryIfNeeded();
         } catch (e) { }
     });
 
+    // step2. 开始初始化 ego_helpers
     // session
     WF.next(() => {
         context.subscriptions.push(
@@ -447,6 +454,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // package file
+    // 获取 package.json 信息
     WF.next(async () => {
         try {
             packageFile = await ego_helpers.getPackageFile();
@@ -482,6 +490,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // global stuff
+    // 处理全局事项
     WF.next(() => {
         context.subscriptions.push({
             dispose: () => {
@@ -493,9 +502,11 @@ export async function activate(context: vscode.ExtensionContext) {
     // workspace watcher
     WF.next(() => {
         context.subscriptions.push(
+            // 监听工作区文件夹变化
             workspaceWatcher = ego_helpers.registerWorkspaceWatcher<ego_workspace.Workspace>(
                 context,
                 async (e, folder) => {
+                    // 工作区添加文件夹时
                     if (e === ego_helpers.WorkspaceWatcherEvent.Added) {
                         if (folder && folder.uri && (['', 'file'].indexOf(ego_helpers.normalizeString(folder.uri.scheme)) > -1)) {
                             // only if local URI
@@ -549,7 +560,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 });
             }),
 
-            // onDidChangeConfiguration
+            // onDidChangeConfiguration 监听配置项的变
             vscode.workspace.onDidChangeConfiguration((e) => {
                 (async () => {
                     try {

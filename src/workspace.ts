@@ -745,6 +745,7 @@ export class Workspace extends ego_helpers.WorkspaceBase {
             this
         );
         // buttons
+        // 3. 触发事件
         ego_workspaces_buttons.disposeButtons.apply(
             this
         );
@@ -972,11 +973,13 @@ export class Workspace extends ego_helpers.WorkspaceBase {
                 return p;
             }
         } else {
+            // 遍历所有 .vscode 文件夹
             for (const LU of this.getFolderLookups()) {
                 const FULL_PATH = path.resolve(
                     path.join(LU, p)
                 );
 
+                // 检查文件夹是否存在
                 if (fsExtra.existsSync(FULL_PATH)) {
                     return FULL_PATH;
                 }
